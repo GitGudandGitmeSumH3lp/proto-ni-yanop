@@ -1,0 +1,59 @@
+import os
+import random
+from flask import Flask, send_file, Response
+
+app = Flask(__name__)
+
+IMAGE_FOLDER = 'sample_images'
+# Get a list of image files from the folder
+try:
+    image_files = [f for f in os.listdir(IMAGE_FOLDER) if f.lower().endswith(('.jpg', '.jpeg'))]
+    if not image_files:
+        print(f"Error: No JPG/JPEG images found in the '{IMAGE_FOLDER}' directory.")
+        print("Please create the directory and add some sample images.")
+        exit() # Exit if no images are found
+    print(f"Found images: {image_files}")
+except FileNotFoundError:
+    print(f"Error: Directory '{IMAGE_FOLDER}' not found.")
+    print("Please create the directory and add some sample images.")
+    exit() # Exit if directory doesn't exist
+
+@app.route('/')
+def index():
+    # Optional: A simple index page to confirm the server is running
+    return "Simulated ESP32-CAM Server is running. Access /jpg to get an image."
+
+@app.route('/jpg')
+def serve_jpg():
+    """Mimics the serveJpg() function"""
+    if not image_files:
+         # Should not happen if initial check passed, but good practice
+        return "No images available", 503
+
+    try:
+        # --- Simulation Logic ---
+        # Select an image to serve (e.g., randomly)
+        selected_image_name = random.choice(image_files)
+        image_path = os.path.join(IMAGE_FOLDER, selected_image_name)
+        print(f"Serving image: {image_path}")
+
+        # Simulate potential capture failure (optional)
+        # if random.random() < 0.1: # Simulate a 10% failure rate
+        #     print("Simulating CAPTURE FAIL")
+        #     return "Simulated capture failure", 503
+
+        # Serve the image file
+        return send_file(image_path, mimetype='image/jpeg')
+
+    except FileNotFoundError:
+        print(f"Error: Image file not found at {image_path}")
+        return "Image file not found", 404
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return "Internal server error", 500
+
+if __name__ == '__main__':
+    # Run the server, accessible from any IP on the network on port 5000
+    # Use '127.0.0.1' if you only want it accessible from your own machine
+    print("Starting simulated server on http://0.0.0.0:5000")
+    app.run(host='0.0.0.0', port=5000, debug=False) # Set debug=True for more logs if needed
